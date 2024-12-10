@@ -63,14 +63,23 @@ MARKDOWN
             req => 1,
             pos => 0,
         },
+        follow_symlink => {
+            schema => 'bool*',
+            default => 1,
+            description => <<'MARKDOWN',
+
+If set to false, will do an `lstat()` instead of `stat()`.
+
+MARKDOWN
+        },
     },
 };
 sub func {
     my %args = @_;
 
-    my @st = stat($args{value});
+    my @st = ($args{follow_symlink} // 1) ?  stat($args{value}) : lstat($args{value});
     unless (@st) {
-        log_warn "Can't stat(%s): %s", $args{value}, $!;
+        log_warn "Can't stat/lstat(%s): %s", $args{value}, $!;
         return [200, "OK"];
     }
     [200, "OK", \@st, $resmeta];
